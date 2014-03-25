@@ -126,7 +126,7 @@ INSTALLED_APPS = (
     'pagination',
     'timezones',
     'crispy_forms',
-    'django_sorting',
+    'pagination',
 
     'compressor',
     'south',
