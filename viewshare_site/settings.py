@@ -15,9 +15,6 @@ MEDIA_URL = '/media/'
 STATIC_ROOT = path.join(path.dirname(__file__), '..', "static")
 STATIC_URL = '/static/'
 
-CMS_MEDIA_ROOT = path.join(STATIC_ROOT, 'cms/')
-CMS_MEDIA_URL = path.join(STATIC_URL, 'cms/')
-
 FILE_UPLOAD_PATH = path.join(path.dirname(__file__), '..', "upload")
 
 COMPRESS_ROOT = STATIC_ROOT
@@ -64,9 +61,11 @@ SECRET_KEY = 'changeme'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-    )
+    ('django.template.loaders.cached.Loader', (
+        'django.template.loaders.filesystem.Loader',
+        'django.template.loaders.app_directories.Loader',
+    )),
+)
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
@@ -76,16 +75,12 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'pagination.middleware.PaginationMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
-    'cms.middleware.page.CurrentPageMiddleware',
-    'cms.middleware.user.CurrentUserMiddleware',
-    'cms.middleware.toolbar.ToolbarMiddleware',
-
     )
 
 ROOT_URLCONF = 'viewshare_site.urls'
 
 AUTHENTICATION_BACKENDS = (
-    'freemix.permissions.RegistryBackend',
+    'viewshare.apps.exhibit.permissions.RegistryBackend',
     'django.contrib.auth.backends.ModelBackend',
     )
 
@@ -99,12 +94,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.static",
     "viewshare.utilities.context_processors.viewshare_settings",
     "viewshare.apps.vendor.notification.context_processors.notification",
-    "viewshare.apps.vendor.announcements.context_processors.site_wide_announcements",
-    "viewshare.apps.account.context_processors.account",
     "viewshare.apps.connections.context_processors.invitations",
-    "cms.context_processors.media",
-    'sekizai.context_processors.sekizai',
-
     )
 
 INSTALLED_APPS = (
@@ -115,48 +105,35 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.humanize',
-    'django.contrib.markup',
+    #'django.contrib.markup',
     'django.contrib.admin',
 
     # external
     'djcelery',
-    'emailconfirmation',
     'django_extensions',
     'pagination',
     'timezones',
     'crispy_forms',
-    'pagination',
-
     'compressor',
     'south',
-
-    # CMS stuff
-    'cms',
-    'mptt',
-    'menus',
-    'sekizai',
-    'cms.plugins.text',
-    'cms.plugins.picture',
-    'cms.plugins.link',
-    'cms.plugins.file',
-    'cms.plugins.snippet',
+    'require',
+    'django_gravatar',
 
     # Freemix specific
-    'freemix',
-    'freemix.dataset',
-    'freemix.exhibit',
-    'freemix.dataset.augment',
-    'freemix.exhibit.share',
+    'viewshare.utilities',
+    'viewshare.apps.legacy.dataset',
+    'viewshare.apps.exhibit',
+    'viewshare.apps.augment',
+    'viewshare.apps.share',
 
     # Viewshare specific
     'viewshare.apps.vendor.notification',
     'viewshare.apps.vendor.friends',
-    'viewshare.apps.vendor.announcements',
+    'announcements',
 
     'viewshare.apps.account',
     'viewshare.apps.discover',
     'viewshare.apps.profiles',
-    'viewshare.apps.site_theme',
     'viewshare.apps.collection_catalog',
     'viewshare.apps.connections',
     'viewshare.apps.upload',
@@ -167,7 +144,6 @@ INSTALLED_APPS = (
     # Site registration
     'registration',
     'viewshare.apps.moderated_registration',
-
     'gunicorn',
     )
 
@@ -187,6 +163,9 @@ TEMPLATE_DIRS = (
     path.join(module_path("viewshare"), "templates"),
     )
 
+CRISPY_TEMPLATE_PACK = 'bootstrap'
+
+
 # Set to describe the site, properties and the names
 
 SITE_NAME = "Viewshare"
@@ -203,6 +182,8 @@ ACCOUNT_EMAIL_VERIFICATION = False
 
 ACCOUNT_ACTIVATION_DAYS = 14
 
+GRAVATAR_DEFAULT_IMAGE = 'identicon'
+
 FIXTURE_DIRS = (
     path.join(module_path("viewshare"), "fixtures"),
     )
@@ -216,17 +197,36 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
     )
 
-# django-cms
-CMS_TEMPLATES = (
-    ('template.html', 'Front Page Template'),
-    ('about/template.html', 'About Page Template'),
-    )
+STATICFILES_STORAGE = 'require.storage.OptimizedStaticFilesStorage'
+
+REQUIRE_BASE_URL = '.'
+
+REQUIRE_JS = 'freemix/js/lib/require.js'
+
+REQUIRE_STANDALONE_MODULES = {
+        'editor-main': {
+            'out': 'editor-built.js',
+            'build_profile': 'editor-build.js'
+        },
+        'exhibit-layout-main': {
+            'out': 'exhibit-layout-built.js',
+            'build_profile': 'exhibit-layout-build.js'
+        },
+        'exhibit-display-main': {
+            'out': 'exhibit-display-built.js',
+            'build_profile': 'exhibit-display-build.js'
+         }
+}
+
+REQUIRE_DEBUG = DEBUG
 
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
+
+CONN_MAX_AGE=160
 
 import logging
 
@@ -235,6 +235,9 @@ logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
 )
 
+# Validate the request's Host header and protect
+# against host-poisoning attacks
+ALLOWED_HOSTS = ('viewshare.org', )
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -276,3 +279,6 @@ except ImportError:
 
 INSTALLED_APPS += LOCAL_INSTALLED_APPS
 MIDDLEWARE_CLASSES = LOCAL_PRE_MIDDLEWARE_CLASSES + MIDDLEWARE_CLASSES + LOCAL_POST_MIDDLEWARE_CLASSES
+
+import djcelery
+djcelery.setup_loader()
