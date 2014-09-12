@@ -1,4 +1,4 @@
--e git+git://github.com/LibraryOfCongress/viewshare.git@4.0.4#egg=viewshare
+-e git+git://github.com/LibraryOfCongress/viewshare.git@4.0.5#egg=viewshare
 South>=0.7.6
 Django==1.4.5
 pillow==2.0.0
@@ -12,18 +12,23 @@ django_piston==0.2.3
 django-email-confirmation==0.2
 django-extensions==1.1.1
 django-pagination==1.0.7
-django-crispy-forms==1.2.4
+django-sorting>=0.1
+django-uni-form==0.8.0
+httplib2==0.7.6
 
 #django-cms depends on the following
-django-reversion==1.6.6
 django-classy-tags==0.4
 django-sekizai==0.7
 django-mptt==0.5.2
 html5lib==0.95
 django-cms==2.3.6
 
+# Piston is required by viewshare.apps.collection_catalog and uses the following
+django-piston==0.2.3
+diff-match-patch==20110725.1
+
 # django-curation is required by viewshare.apps.discover
--e git+git://github.com/theatlantic/django-curation.git#egg=django-curation
+-e git+git://github.com/theatlantic/django-curation.git@v1.0.11#egg=django-curation
 
 # Uncomment for uservoice integration
 # pycrypto==2.3
